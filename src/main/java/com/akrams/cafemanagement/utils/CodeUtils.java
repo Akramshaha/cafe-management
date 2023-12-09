@@ -11,4 +11,8 @@ public class CodeUtils {
     public static ResponseEntity<String> getResponseEntity(String responseMsg, HttpStatus code){
         return new ResponseEntity<String>("{\"message\":\""+responseMsg+"\"}", code);
     }
+
+    public static ResponseEntity<?> getResponseEntityObj(Object responseObj, HttpStatus code){
+        return new ResponseEntity<Object>(responseObj, code);
+    }
 }
