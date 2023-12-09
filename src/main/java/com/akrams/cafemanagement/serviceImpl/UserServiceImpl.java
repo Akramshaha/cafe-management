@@ -1,19 +1,29 @@
 package com.akrams.cafemanagement.serviceImpl;
 
+import com.akrams.cafemanagement.JWT.CustomUserDetailsService;
+import com.akrams.cafemanagement.JWT.JwtUtil;
 import com.akrams.cafemanagement.constants.CodeConstants;
 import com.akrams.cafemanagement.model.User;
 import com.akrams.cafemanagement.repository.UserRepository;
 import com.akrams.cafemanagement.service.UserService;
 import com.akrams.cafemanagement.utils.CodeUtils;
-import lombok.Builder;
+import com.akrams.cafemanagement.wrapper.UserWrapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -21,6 +31,14 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    JwtUtil jwtUtil;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    ModelMapper modelMapper;
 
     @Override
     public ResponseEntity<String> signUp(Map<String, String> requestMap) {
@@ -28,8 +46,8 @@ public class UserServiceImpl implements UserService {
 
         try {
             if (validateSignUpData(requestMap)){
-                User user = userRepository.findByEmail(requestMap.get("email"));
-                if(Objects.isNull(user)){
+                Optional<User> user = userRepository.findByEmail(requestMap.get("email"));
+                if(!user.isPresent()){
                     userRepository.save(getUserFromMap(requestMap));
                     return CodeUtils.getResponseEntity(CodeConstants.SUCCESSFULLY_REGISTER,HttpStatus.CREATED);
                 }else{
@@ -42,6 +60,31 @@ public class UserServiceImpl implements UserService {
             e.printStackTrace();
         }
         return CodeUtils.getResponseEntity(CodeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> login(Map<String, String> reqMap) {
+        log.info("Inside Login");
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(reqMap.get("email"));
+        if (userDetails == null) return CodeUtils.getResponseEntity("User not found", HttpStatus.NOT_FOUND);
+        if (!passwordEncoder.matches(reqMap.get("password"), userDetails.getPassword())) return CodeUtils.getResponseEntity("Password not matched", HttpStatus.BAD_REQUEST);
+//        log.info(" userDetails.getAuthorities().stream().findAny().get().getAuthority().toUpperCase() {}", userDetails.getAuthorities().stream().findAny().get().getAuthority().toUpperCase());
+        return ResponseEntity.ok()
+                .header("jwt",(jwtUtil.generate(reqMap.get("email"),
+                        userDetails.getAuthorities().stream().findAny().get().getAuthority().toUpperCase())))
+                .body("Response with header using ResponseEntity");
+    }
+
+    @Override
+    public ResponseEntity<List<UserWrapper>> getAllUsers() {
+        try {
+            List<User> userList = userRepository.findAll();
+            List<UserWrapper> userWrapperList = userList.stream().map((u) ->modelMapper.map(u, UserWrapper.class)).collect(Collectors.toList());
+            
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return new ResponseEntity<List<UserWrapper>>(new ArrayList<>(),HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private boolean validateSignUpData(Map<String, String> reqMap){
@@ -57,7 +100,7 @@ public class UserServiceImpl implements UserService {
         user.setName(reqMap.get("name"));
         user.setEmail(reqMap.get("email"));
         user.setContactNumber(reqMap.get("contactNumber"));
-        user.setPassword(reqMap.get("password"));
+        user.setPassword(passwordEncoder.encode(reqMap.get("password")));
         user.setStatus("A");
         user.setRole("USER");
 

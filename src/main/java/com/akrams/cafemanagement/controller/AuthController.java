@@ -1,23 +1,22 @@
 package com.akrams.cafemanagement.controller;
 
 import com.akrams.cafemanagement.constants.CodeConstants;
-import com.akrams.cafemanagement.rest.UserRest;
+import com.akrams.cafemanagement.rest.AdminRest;
 import com.akrams.cafemanagement.service.UserService;
 import com.akrams.cafemanagement.utils.CodeUtils;
-import com.akrams.cafemanagement.wrapper.UserWrapper;
-import jakarta.servlet.http.HttpServletResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @RestController
-public class UserController implements UserRest {
+public class AuthController implements AdminRest {
 
     @Autowired
     private UserService userService;
@@ -42,14 +41,4 @@ public class UserController implements UserRest {
         return CodeUtils.getResponseEntity(CodeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @Override
-    public ResponseEntity<List<UserWrapper>> getAllUsers() {
-
-        try {
-            return userService.getAllUsers();
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return new ResponseEntity<List<UserWrapper>>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
 }
