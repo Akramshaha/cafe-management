@@ -3,8 +3,13 @@ package com.akrams.cafemanagement.serviceImpl;
 import com.akrams.cafemanagement.JWT.CustomUserDetailsService;
 import com.akrams.cafemanagement.JWT.JwtUtil;
 import com.akrams.cafemanagement.constants.CodeConstants;
+import com.akrams.cafemanagement.dto.CategoryDTO;
+import com.akrams.cafemanagement.dto.ProductDTO;
+import com.akrams.cafemanagement.model.Category;
 import com.akrams.cafemanagement.model.User;
 import com.akrams.cafemanagement.repository.UserRepository;
+import com.akrams.cafemanagement.service.CategoryService;
+import com.akrams.cafemanagement.service.ProductService;
 import com.akrams.cafemanagement.service.UserService;
 import com.akrams.cafemanagement.utils.CodeUtils;
 import com.akrams.cafemanagement.wrapper.UserWrapper;
@@ -39,6 +44,10 @@ public class UserServiceImpl implements UserService {
     PasswordEncoder passwordEncoder;
     @Autowired
     ModelMapper modelMapper;
+    @Autowired
+    CategoryService categoryService;
+    @Autowired
+    ProductService productService;
 
     @Override
     public ResponseEntity<String> signUp(Map<String, String> requestMap) {
@@ -87,6 +96,8 @@ public class UserServiceImpl implements UserService {
         return new ResponseEntity<List<UserWrapper>>(new ArrayList<>(),HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+
+
     private boolean validateSignUpData(Map<String, String> reqMap){
         if(reqMap.containsKey("name") && reqMap.containsKey("contactNumber")
                 && reqMap.containsKey("email") && reqMap.containsKey("password")){
@@ -105,5 +116,33 @@ public class UserServiceImpl implements UserService {
         user.setRole("USER");
 
         return user;
+    }
+
+    @Override
+    public List<CategoryDTO> getAllCategory() {
+        List<CategoryDTO> list = categoryService.getAllCategory().stream().map(
+                (category) -> modelMapper.map(category,CategoryDTO.class)
+        ).collect(Collectors.toList());
+
+        return list;
+    }
+
+    @Override
+    public List<ProductDTO> getAllProduct() {
+        List<ProductDTO> list = productService.getAllProducts().stream().map(
+                (product) -> modelMapper.map(product,ProductDTO.class)
+        ).collect(Collectors.toList());
+
+        return list;
+    }
+
+    @Override
+    public List<ProductDTO> getAllProductByCategoryId(int categoryId) {
+        //Category category = categoryService.findCategoryById(categoryId);
+        List<ProductDTO> list = productService.getAllProductsByCategoryId(categoryId).stream().map(
+                (product) -> modelMapper.map(product,ProductDTO.class)
+        ).collect(Collectors.toList());
+
+        return list;
     }
 }

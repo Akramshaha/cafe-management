@@ -32,4 +32,9 @@ public class CategoryServiceImpl implements CategoryService {
     public Category findCategory(CategoryDTO categoryDTO) {
         return categoryRepo.findByCategoryName(categoryDTO.getCategoryName());
     }
+
+    @Override
+    public Category findCategoryById(int categoryId) {
+        return categoryRepo.findById(categoryId).get();
+    }
 }

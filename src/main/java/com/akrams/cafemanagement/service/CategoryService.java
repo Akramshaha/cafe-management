@@ -12,4 +12,5 @@ public interface CategoryService {
 
     public Category findCategory(CategoryDTO categoryDTO);
 
+    Category findCategoryById(int categoryId);
 }
